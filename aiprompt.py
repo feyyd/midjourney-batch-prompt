@@ -2,28 +2,31 @@ import time
 import argparse
 import pyautogui
 import sys
+import re
 
-#---------------------------UNUSED ATM-------------------------
-# prompt 'with the texture of' - modifies the surface of the subject.  Things like: chrome, wood, stone work well, but things like rain, clouds, stars don't have great effect
-prompt_with_texture_of = 'with texture of {0}'
-# prompt 'made of' - more radical than above, good with things like yarn, cotton, lace, or other effects where more than just surface modification is needed
-prompt_made_of = 'made of {0}'
-prompt_style_of = 'in the style of {0}'
-
-textures = 'argyle', 'pinstripe', 'cloth', 'fabric', 'hair', 'fur', 'lace', 'clouds', 'slime', 'yarn', 'wood', 'rainbows', 'jewelery',
-'blood', 'rain', 'leather', 'snow', 'elements', 'plastic', 'chrome', 'glass', 'cracked glass', 'powder', 'skin', 'billboards',
-'crystals', 'gemstones', 'muscle tissue', 'dirt', 'mud', 'brick', 'letters', 'numbers', 'holidays (christmas, easter)', 'candy cane',
-'candysports jersey', 'uniform', 'foiliage', 'flowers', 'plants', 'moss', 'rust', 'cement', 'water', 'liquid', 'galaxies', 'stars',
-'lego', 'hearts'
-#--------------------------------------------------------------
-
+# Toggle debug statements
+DEBUG = False # perhaps change to python 'logging'
 # Program is dumb, it just clicks taskbar discord icon, then clicks the text input bar at these locations and types, these values need setup per machine
 discord_icon_location = (1225,1408)
 discord_message_location = (507,1320)
 # Time between batches (9 prompts, midjourney's limit)
 batch_sleep_delay = 150
-# Toggle debug statements
-DEBUG = False # perhaps change to python 'logging'
+
+# prompt 'with the texture of' - modifies the surface of the subject.  Things like: chrome, wood, stone work well, but things like rain, clouds, stars don't have great effect
+prompt_with_texture_of = ', with texture of '
+# prompt 'made of' - more radical than above, good with things like yarn, cotton, lace, or other effects where more than just surface modification is needed
+prompt_made_of = ', made of '
+prompt_style_of = ', in the style of '
+
+in_the_styles_of = ['picasso', 'van gough'] 
+#textures = ['argyle', 'pinstripe']
+textures = ['argyle', 'pinstripe', 'cloth', 'fabric', 'hair', 'fur', 'lace', 'clouds', 'slime', 'yarn', 'wood', 'rainbows', 'jewelery',
+'blood', 'rain', 'leather', 'snow', 'elements', 'plastic', 'chrome', 'glass', 'cracked glass', 'powder', 'skin', 'billboards',
+'crystals', 'gemstones', 'muscle tissue', 'dirt', 'mud', 'brick', 'letters', 'numbers', 'holidays (christmas, easter)', 'candy cane',
+'candysports jersey', 'uniform', 'foiliage', 'flowers', 'plants', 'moss', 'rust', 'cement', 'water', 'liquid', 'galaxies', 'stars',
+'lego', 'hearts']
+
+
 
 def apply_custom_modes(args):
     # When a custom mode is selected, replace command line arguments
@@ -52,9 +55,9 @@ def setup_argument_parser():
     # setup console argument parsing
     parser = argparse.ArgumentParser(description='Midjourney AI Prompt Assist Tool')
     
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('infile', nargs='?', type=argparse.FileType('r',1024,'utf-16'), default=sys.stdin)
-    group.add_argument('--subject', nargs='+', help='Prompt Subject.')
+    group1 = parser.add_mutually_exclusive_group(required=True)
+    group1.add_argument('infile', nargs='?', type=argparse.FileType('r',1024,'utf-16'), default=sys.stdin)
+    group1.add_argument('--subject', nargs='+', help='Prompt Subject.')
     
     parser.add_argument('--ar', nargs='*', help='Aspect Ratio. (1:1,2:1,16:9)', default=['2:1'])
     parser.add_argument('--weird', nargs='*', help='Weird. (0-3000)', default=['0'])
@@ -64,6 +67,14 @@ def setup_argument_parser():
                         choices=['', 'raw', '4a', '4b', '4c'], default=[''])
     
     parser.add_argument('--text', action='store_true', help='Only print text prompts, do not push to discord')
+    
+    # these options will toggle the use of the topmost arrays of textures or style_ofs and will add to the end of the subject
+    # WARNING:  Can cause enormous amounts of permutations so set the arrays and values in them accordingly
+    group2 = parser.add_mutually_exclusive_group(required=False)
+    group2.add_argument('--textureof', action='store_true', help='Use texture_of with texture array in script')
+    group2.add_argument('--madeof', action='store_true', help='Use made_of with texture array in script')
+    
+    parser.add_argument('--styleof', action='store_true', help='Use style_of with texture array in script')
     
     parser.add_argument('--mode1', action='store_true', help='Custom Mode1 Settings. (Nice after subject setup)')
     parser.add_argument('--mode2', action='store_true', help='Custom Mode2 Settings. (Test small amt permutations)')
@@ -79,10 +90,40 @@ def setup_argument_parser():
     args = apply_custom_modes(args)
     
     return args
+
+    
+def safe_format(template, **kwargs):
+    # format options weren't letting me replace subset of placeholders, re method allows it though, written by ChatGPT
+
+    # Create a pattern to match named placeholders
+    pattern = re.compile(r'\{(\w+)\}')
+    
+    # Function to replace placeholders with given values or leave unchanged
+    def replacer(match):
+        key = match.group(1)
+        return str(kwargs[key]) if key in kwargs else match.group(0)
+    
+    # Use the replacer function to format the string
+    return pattern.sub(replacer, template)
+
+def inject_string_with_values(expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar):
+    formattable_prompt_string = '{subject}{texture_of}{made_of}{style_of} --ar {aspectRatio} --chaos {chaos} --weird {weird} --stylize {stylize} {style}'
+    #add --style if style was set in options, doing this here to avoid having user input '--style' with the option
+    style_string = f'--style {arg_style}' if (arg_style != '') else arg_style
+    
+    replace_values = {
+        'subject':expanded_subject, 
+        'aspectRatio':arg_ar, 
+        'chaos':arg_chaos, 
+        'weird':arg_weird, 
+        'stylize':arg_stylize, 
+        'style':style_string
+    }
+    formatted_string = safe_format(formattable_prompt_string, **replace_values)
+    print(formatted_string)
+    return formatted_string
     
 def generate_full_strings(args):
-    formattable_prompt_string = '{subject} --ar {aspectRatio} --chaos {chaos} --weird {weird} --stylize {stylize} {style}'
-
     # Convert subject array of strings into a single string separated by spaces
     subject_as_string = ' '.join(map(str,args.subject))
     # extract any embedded multiples in subject ie 'test {opt1, opt2}' -> ['test opt1' 'test opt2']
@@ -95,12 +136,42 @@ def generate_full_strings(args):
                 for arg_stylize in args.stylize:
                     for arg_style in args.style:
                         for expanded_subject in expanded_subjects:
-                            #add --style if style was set in options, doing this here to avoid having user input '--style' with the option
-                            style_string = f'--style {arg_style}' if (arg_style != '') else arg_style
-                            formatted_string = formattable_prompt_string.format(
-                                subject=expanded_subject, aspectRatio = arg_ar, chaos = arg_chaos, weird = arg_weird, stylize = arg_stylize, style = style_string)
-                            all_prompt_strings.append(formatted_string)                        
-        
+                            # inject all guaranteed to be used
+                            formatted_string = inject_string_with_values(expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar)
+                            
+                            #-------------don't like this structure------------
+                            # If either of these are true, need to iterate through texture array, also check 
+                            # if style_of is set when going through textures and add it to final list at deepest level
+                            if ( args.textureof or args.madeof):
+                                for texture in textures:
+                                    # can only have texture_of or made_of not both so resolving that here by blanking the one not passed
+                                    if (args.textureof):
+                                        formatted_string_l1 = safe_format(formatted_string, **{'texture_of':f'{prompt_with_texture_of}{texture}','made_of':''})    
+                                    elif (args.madeof):
+                                        formatted_string_l1 = safe_format(formatted_string, **{'texture_of':'','made_of':f'{prompt_made_of}{texture}'})
+                                    
+                                    # deepest level, so appending to all_prompt_strings
+                                    if (args.styleof):
+                                        for style_of_value in in_the_styles_of:
+                                            formatted_string_l2 = safe_format(formatted_string_l1, **{'style_of':f'{prompt_style_of}{style_of_value}'})
+                                            all_prompt_strings.append(formatted_string_l2)
+                                    # still deepest level, but style_of wasn't selected, so we blank that value in the formatted string
+                                    else:
+                                        formatted_string_l2 = safe_format(formatted_string_l1, **{'style_of':''})
+                                        all_prompt_strings.append(formatted_string_l2)
+                            # this is the same code as the deepest level, but we still need to run it, because we never go through styles if
+                            # texture_of or #made_of are both false.
+                            else:
+                                # blank the unused values
+                                formatted_string_l1 = safe_format(formatted_string, **{'texture_of':'', 'made_of':''})
+                                if (args.styleof):
+                                        for style_of_value in in_the_styles_of:                                            
+                                            formatted_string_l2 = safe_format(formatted_string_l1, **{'style_of':f'{prompt_style_of}{style_of_value}'})
+                                            all_prompt_strings.append(formatted_string_l2)
+                                else:
+                                    formatted_string_l2 = safe_format(formatted_string_l1, **{'style_of':''})
+                                    all_prompt_strings.append(formatted_string_l2)
+                            #--------------------------------------------------
     return all_prompt_strings                          
 
 def print_full_strings(full_strings):
