@@ -10,7 +10,7 @@ and "discordMessageLocation".  Yes, this is very prone to error.
 "batchSleepDelay" is the number of seconds between batches of 9 that can be adjusted depending on the workload.
 
 # usage
-usage: aiprompt.py [-h] [--subject SUBJECT [SUBJECT ...]] [--ar [AR ...]] [--weird [WEIRD ...]] [--chaos [CHAOS ...]]
+    usage: aiprompt.py [-h] [--subject SUBJECT [SUBJECT ...]] [--ar [AR ...]] [--weird [WEIRD ...]] [--chaos [CHAOS ...]]
                    [--stylize [STYLIZE ...]] [--style [{,raw,4a,4b,4c} ...]] [--text] [--mode1] [--mode2] [--mode3]
                    [infile]
 
@@ -18,17 +18,18 @@ positional arguments:
   infile
 
 options:
-  -h, --help                        show this help message and exit
-  --subject SUBJECT [SUBJECT ...]   Prompt Subject.
-  --ar [AR ...]                     Aspect Ratio. (1:1,2:1,16:9)
-  --weird [WEIRD ...]               Weird. (0-3000)
-  --chaos [CHAOS ...]               Chaos. (0-100)
-  --stylize [STYLIZE ...]           Stylize. (0-1000?)
-  --style [{,raw,4a,4b,4c} ...]     Style. 4a,4b,4c does not work with newest versions but are valid on older ones. (raw, 4a, 4b, 4c)
-  --text                            Only print text prompts, do not push to discord
-  --mode1                           Custom Mode1 Settings. (Nice after subject setup)
-  --mode2                           Custom Mode2 Settings. (Test small amt permutations)
-  --mode3                           Custom Mode3 Settings. (Slots)
+  
+    -h, --help                        show this help message and exit
+    --subject SUBJECT [SUBJECT ...]   Prompt Subject.
+    --ar [AR ...]                     Aspect Ratio. (1:1,2:1,16:9)
+    --weird [WEIRD ...]               Weird. (0-3000)
+    --chaos [CHAOS ...]               Chaos. (0-100)
+    --stylize [STYLIZE ...]           Stylize. (0-1000?)
+    --style [{,raw,4a,4b,4c} ...]     Style. 4a,4b,4c does not work with newest versions but are valid on older ones. (raw, 4a, 4b, 4c)
+    --text                            Only print text prompts, do not push to discord
+    --mode1                           Custom Mode1 Settings. (Nice after subject setup)
+    --mode2                           Custom Mode2 Settings. (Test small amt permutations)
+    --mode3                           Custom Mode3 Settings. (Slots)
 
   **examples (powershell):**
   _Inject into Discord via pyautogui:_
