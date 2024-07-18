@@ -8,6 +8,7 @@ import sys
 promptWithTextureOf = 'with texture of {0}'
 # prompt "made of" - more radical than above, good with things like yarn, cotton, lace, or other effects where more than just surface modification is needed
 promptMadeOf = 'made of {0}'
+promptStyleOf = 'in the style of {0}'
 
 textures = 'argyle', 'pinstripe', 'cloth', 'fabric', 'hair', 'fur', 'lace', 'clouds', 'slime', 'yarn', 'wood', 'rainbows', 'jewelery',
 'blood', 'rain', 'leather', 'snow', 'elements', 'plastic', 'chrome', 'glass', 'cracked glass', 'powder', 'skin', 'billboards',
@@ -22,9 +23,9 @@ discordMessageLocation = (507,1320)
 # Time between batches (9 prompts, midjourney's limit)
 batchSleepDelay = 150
 # Toggle debug statements
-DEBUG = False # perhaps change to python "logging"
+DEBUG = True # perhaps change to python "logging"
 
-def ApplyCustomModes(args):
+def apply_custom_modes(args):
     # When a custom mode is selected, replace command line arguments
     if ( args.mode1 is True ):
         args.chaos = [0, 10, 25]
@@ -47,7 +48,7 @@ def ApplyCustomModes(args):
         
     return args
 
-def SetupArgumentParser():
+def setup_argument_parser():
     #setup console argument parsing
     parser = argparse.ArgumentParser(description='Midjourney AI Prompt Assist Tool')
     
@@ -75,16 +76,17 @@ def SetupArgumentParser():
 
     # Parse the arguments
     args = parser.parse_args()   
-    args = ApplyCustomModes(args)
+    args = apply_custom_modes(args)
     
     return args
     
-def GenerateFullStrings(args):
+def generate_full_strings(args):
     formattablePromptString = '{subject} --ar {aspectRatio} --chaos {chaos} --weird {weird} --stylize {stylize} {style}'
 
     # Convert subject array of strings into a single string separated by spaces
     subjectAsString = ' '.join(map(str,args.subject))
-    
+    # extract any embedded multiples in subject ie "test {opt1, opt2}" -> ["test opt1" "test opt2"]
+    expandedSubjects = expand_strings(subjectAsString)
     #for each combination, insert into a string, then add that string to a list
     allPromptStrings = []
     for arg_ar in args.ar:
@@ -92,21 +94,34 @@ def GenerateFullStrings(args):
             for arg_chaos in args.chaos:
                 for arg_stylize in args.stylize:
                     for arg_style in args.style:
-                        #add --style if style was set in options
-                        styleString = f'--style {arg_style}' if (arg_style != '') else arg_style
-                        newString = formattablePromptString.format(
-                            subject=subjectAsString, aspectRatio = arg_ar, chaos = arg_chaos, weird = arg_weird, stylize = arg_stylize, style = styleString)
-                        allPromptStrings.append(newString)                        
+                        for expandedSubject in expandedSubjects:
+                            #add --style if style was set in options, doing this here to avoid having user input "--style" with the option
+                            styleString = f'--style {arg_style}' if (arg_style != '') else arg_style
+                            newString = formattablePromptString.format(
+                                subject=expandedSubject, aspectRatio = arg_ar, chaos = arg_chaos, weird = arg_weird, stylize = arg_stylize, style = styleString)
+                            allPromptStrings.append(newString)                        
         
     return allPromptStrings                          
 
-def PrintFullStrings(fullStrings):
+def print_full_strings(fullStrings):
     for index, string in enumerate(fullStrings):
         if index % 9 == 0:
             print() #empty line
-        print(string)
+        print(string, end='\n')
+        
+# String Methods Word Extraction Approach (faster than regex, more readable)
+def expand_strings(template):
+    start = template.find('{')
+    end = template.find('}', start)
+    if start == -1 or end == -1:
+        return [template]
+    words_section = template[start+1:end]
+    words = [word.strip() for word in words_section.split(",")]
+    prefix = template[:start]
+    suffix = template[end+1:]
+    return [f"{prefix}{word}{suffix}" for word in words]
     
-def DiscordPromptInjection(fullStrings):
+def inject_discord_prompts(fullStrings):
     imagineString = '/imagine'
     timerFragments = 20
     totalPrompts = remainingPrompts = fullStrings.__len__()
@@ -141,28 +156,31 @@ def DiscordPromptInjection(fullStrings):
                 time.sleep(batchSleepDelay/timerFragments)
 
 def main():
-    args = SetupArgumentParser()
-    if (DEBUG): print(args)
+    args = setup_argument_parser()
+    if (DEBUG):
+        print(args, end='\n\n')
     
     # Don't generate strings if we are using an input file
-    fullStrings = [''] if args.subject is None else GenerateFullStrings(args)
-
+    fullStrings = [''] if args.subject is None else generate_full_strings(args)
+        
     # text
     if (args.text is True):
-        PrintFullStrings(fullStrings)
+        print_full_strings(fullStrings)
         sys.exit()
     # infile
     elif (args.infile.name != '<stdin>'):
         print("Using file " + args.infile.name + " for Discord injection, ignoring prompt args\n")
         fullStrings = args.infile.readlines()
-    
+
     # Remove blank lines and remove trailing/leading white space (that were added for human readability)
     nonBlankStrings = [s.strip() for s in fullStrings if s.strip() != ""]
-    if (DEBUG): print(nonBlankStrings)
 
     # infile/--subject
-    DiscordPromptInjection(nonBlankStrings)
+    inject_discord_prompts(nonBlankStrings)
 
+def test_expand_strings():
+    print(expand_strings("static text {ab,yz}"))
 
 if __name__ == "__main__":
+    print() # Easier to read command line with separator
     main() 
