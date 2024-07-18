@@ -55,6 +55,7 @@ and "discordMessageLocation".  Yes, this is very prone to error.
     Brown bananas in sunlight --ar 2:1 --chaos 10 --weird 20 --stylize 400
 
   _Read from file (blank lines and leading/trailing whitespace will be removed):_
-  python .\aiprompt.py test.txt
+
+    python .\aiprompt.py test.txt
 
   
