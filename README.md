@@ -1,11 +1,13 @@
 # Midjourney AI Prompt Assist Tool
-# midjourney-batch-prompt
+_**midjourney-batch-prompt**_
 
 Python script for batching Midjourney requests to overcome the 9 prompt submission limit.  This script will
 create all combinations of desired prompt and values then inject them into discord using pyautogui.  Python is _not_
 my primary language.
 
-# Setup - Script clicks Discord icon in Taskbar to bring to foreground, then it clicks the current Discord text input field.  Yes, this is very prone to error.
+# Setup
+
+Script clicks Discord icon in Taskbar to bring to foreground, then it clicks the current Discord text input field.  Yes, this is very prone to error.
 
     "discordIconLocation", "discordMessageLocation" - Tuple of x,y coordinates where the program clicks (Taskbar,Input field respectively)
         These will almost certainly need to be changed or modified in some way
