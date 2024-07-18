@@ -14,8 +14,15 @@ textures = 'argyle', 'pinstripe', 'cloth', 'fabric', 'hair', 'fur', 'lace', 'clo
 'crystals', 'gemstones', 'muscle tissue', 'dirt', 'mud', 'brick', 'letters', 'numbers', 'holidays (christmas, easter)', 'candy cane',
 'candysports jersey', 'uniform', 'foiliage', 'flowers', 'plants', 'moss', 'rust', 'cement', 'water', 'liquid', 'galaxies', 'stars',
 'lego', 'hearts'
-#---------------------------UNUSED ATM-------------------------
+#--------------------------------------------------------------
 
+# Program is dumb, it just clicks taskbar discord icon, then clicks the text input bar at these locations and types, these values need setup per machine
+discordIconLocation = (1225,1408)
+discordMessageLocation = (507,1320)
+# Time between batches (9 prompts, midjourney's limit)
+batchSleepDelay = 150
+# Toggle debug statements
+DEBUG = False # perhaps change to python "logging"
 
 def ApplyCustomModes(args):
     # When a custom mode is selected, replace command line arguments
@@ -55,7 +62,7 @@ def SetupArgumentParser():
     parser.add_argument('--style', nargs='*', help='Style. 4a,4b,4c does not work with newest versions but are valid on older ones. (raw, 4a, 4b, 4c)', 
                         choices=['', 'raw', '4a', '4b', '4c'], default=[''])
     
-    parser.add_argument('--text', action='store_true', help='Only print text prompts, do not shift to discord')
+    parser.add_argument('--text', action='store_true', help='Only print text prompts, do not push to discord')
     
     parser.add_argument('--mode1', action='store_true', help='Custom Mode1 Settings. (Nice after subject setup)')
     parser.add_argument('--mode2', action='store_true', help='Custom Mode2 Settings. (Test small amt permutations)')
@@ -100,15 +107,14 @@ def PrintFullStrings(fullStrings):
         print(string)
     
 def DiscordPromptInjection(fullStrings):
-    batchSleepDelay = 150
-    imagineString = '/imagine'    
+    imagineString = '/imagine'
     
     # Discord Icon Location
-    pyautogui.click(x=1225, y=1408, clicks=1, interval=1, button='left')
+    pyautogui.click(discordIconLocation, clicks=1, interval=1, button='left')
     time.sleep(.2)
     
     # Discord Message Location
-    pyautogui.click(x=507, y=1320, clicks=1, interval=1, button='left')
+    pyautogui.click(discordMessageLocation, clicks=1, interval=1, button='left')
     time.sleep(.2)
     
     while (fullStrings.__len__() > 0):
@@ -126,7 +132,7 @@ def DiscordPromptInjection(fullStrings):
 
 def main():
     args = SetupArgumentParser()
-    # print(args)
+    if (DEBUG): print(args)
     
     # Don't generate strings if we are using an input file
     fullStrings = [''] if args.subject is None else GenerateFullStrings(args)
@@ -142,6 +148,7 @@ def main():
     
     # Remove blank lines and remove trailing/leading white space (that were added for human readability)
     nonBlankStrings = [s.strip() for s in fullStrings if s.strip() != ""]
+    if (DEBUG): print(nonBlankStrings)
 
     # infile/--subject
     DiscordPromptInjection(nonBlankStrings)
