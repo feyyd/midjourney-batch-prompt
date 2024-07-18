@@ -108,6 +108,9 @@ def PrintFullStrings(fullStrings):
     
 def DiscordPromptInjection(fullStrings):
     imagineString = '/imagine'
+    timerFragments = 20
+    totalPrompts = remainingPrompts = fullStrings.__len__()
+    
     
     # Discord Icon Location
     pyautogui.click(discordIconLocation, clicks=1, interval=1, button='left')
@@ -117,18 +120,25 @@ def DiscordPromptInjection(fullStrings):
     pyautogui.click(discordMessageLocation, clicks=1, interval=1, button='left')
     time.sleep(.2)
     
-    while (fullStrings.__len__() > 0):
+    while (remainingPrompts > 0):
         # Keyboard type the 9 strings and remove strings from list that we are processing
         for j in range(9):
-            if (fullStrings.__len__() > 0 ):
+            if (remainingPrompts > 0 ):
                 pyautogui.typewrite( f'{imagineString} {fullStrings.pop()}')
+                remainingPrompts -= 1
                 time.sleep(.33)
                 pyautogui.press('enter')
                 time.sleep(1)
         
+        # 2 decimal precision
+        remainingPercentage = "{:.2f}".format((1-(remainingPrompts/totalPrompts)) * 100)
+        print(f'{remainingPrompts}/{totalPrompts} prompts remain. ({remainingPercentage}% complete.)')
         #don't sleep if list is empty
-        if (fullStrings.__len__() > 0 ): 
-            time.sleep(batchSleepDelay)
+        if (fullStrings.__len__() > 0 ):
+            for k in range(timerFragments):                
+                # Sleep progress percentage
+                print(f'{((k * 100/timerFragments))}% through current sleep.')
+                time.sleep(batchSleepDelay/timerFragments)
 
 def main():
     args = SetupArgumentParser()
