@@ -4,9 +4,9 @@ import pyautogui
 import sys
 
 #---------------------------UNUSED ATM-------------------------
-# prompt "with the texture of" - modifies the surface of the subject.  Things like: chrome, wood, stone work well, but things like rain, clouds, stars don't have great effect
+# prompt 'with the texture of' - modifies the surface of the subject.  Things like: chrome, wood, stone work well, but things like rain, clouds, stars don't have great effect
 promptWithTextureOf = 'with texture of {0}'
-# prompt "made of" - more radical than above, good with things like yarn, cotton, lace, or other effects where more than just surface modification is needed
+# prompt 'made of' - more radical than above, good with things like yarn, cotton, lace, or other effects where more than just surface modification is needed
 promptMadeOf = 'made of {0}'
 promptStyleOf = 'in the style of {0}'
 
@@ -23,7 +23,7 @@ discordMessageLocation = (507,1320)
 # Time between batches (9 prompts, midjourney's limit)
 batchSleepDelay = 150
 # Toggle debug statements
-DEBUG = True # perhaps change to python "logging"
+DEBUG = True # perhaps change to python 'logging'
 
 def apply_custom_modes(args):
     # When a custom mode is selected, replace command line arguments
@@ -85,7 +85,7 @@ def generate_full_strings(args):
 
     # Convert subject array of strings into a single string separated by spaces
     subjectAsString = ' '.join(map(str,args.subject))
-    # extract any embedded multiples in subject ie "test {opt1, opt2}" -> ["test opt1" "test opt2"]
+    # extract any embedded multiples in subject ie 'test {opt1, opt2}' -> ['test opt1' 'test opt2']
     expandedSubjects = expand_strings(subjectAsString)
     #for each combination, insert into a string, then add that string to a list
     allPromptStrings = []
@@ -95,7 +95,7 @@ def generate_full_strings(args):
                 for arg_stylize in args.stylize:
                     for arg_style in args.style:
                         for expandedSubject in expandedSubjects:
-                            #add --style if style was set in options, doing this here to avoid having user input "--style" with the option
+                            #add --style if style was set in options, doing this here to avoid having user input '--style' with the option
                             styleString = f'--style {arg_style}' if (arg_style != '') else arg_style
                             newString = formattablePromptString.format(
                                 subject=expandedSubject, aspectRatio = arg_ar, chaos = arg_chaos, weird = arg_weird, stylize = arg_stylize, style = styleString)
@@ -116,10 +116,10 @@ def expand_strings(template):
     if start == -1 or end == -1:
         return [template]
     words_section = template[start+1:end]
-    words = [word.strip() for word in words_section.split(",")]
+    words = [word.strip() for word in words_section.split(',')]
     prefix = template[:start]
     suffix = template[end+1:]
-    return [f"{prefix}{word}{suffix}" for word in words]
+    return [f'{prefix}{word}{suffix}' for word in words]
     
 def inject_discord_prompts(fullStrings):
     imagineString = '/imagine'
@@ -146,7 +146,7 @@ def inject_discord_prompts(fullStrings):
                 time.sleep(1)
         
         # 2 decimal precision
-        remainingPercentage = "{:.2f}".format((1-(remainingPrompts/totalPrompts)) * 100)
+        remainingPercentage = '{:.2f}'.format((1-(remainingPrompts/totalPrompts)) * 100)
         print(f'{remainingPrompts}/{totalPrompts} prompts remain. ({remainingPercentage}% complete.)')
         #don't sleep if list is empty
         if (fullStrings.__len__() > 0 ):
@@ -169,18 +169,18 @@ def main():
         sys.exit()
     # infile
     elif (args.infile.name != '<stdin>'):
-        print("Using file " + args.infile.name + " for Discord injection, ignoring prompt args\n")
+        print('Using file ' + args.infile.name + ' for Discord injection, ignoring prompt args\n')
         fullStrings = args.infile.readlines()
 
     # Remove blank lines and remove trailing/leading white space (that were added for human readability)
-    nonBlankStrings = [s.strip() for s in fullStrings if s.strip() != ""]
+    nonBlankStrings = [s.strip() for s in fullStrings if s.strip() != '']
 
     # infile/--subject
     inject_discord_prompts(nonBlankStrings)
 
 def test_expand_strings():
-    print(expand_strings("static text {ab,yz}"))
+    print(expand_strings('static text {ab,yz}'))
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     print() # Easier to read command line with separator
     main() 
