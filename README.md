@@ -14,7 +14,12 @@ and "discordMessageLocation".  Yes, this is very prone to error.
                    [--stylize [STYLIZE ...]] [--style [{,raw,4a,4b,4c} ...]] [--text] [--mode1] [--mode2] [--mode3]
                    [infile]
 
+required arguments:
+  
+  --subject OR infile
+
 positional arguments:
+  
   infile
 
 options:
