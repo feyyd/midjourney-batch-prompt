@@ -5,10 +5,10 @@ import sys
 
 #---------------------------UNUSED ATM-------------------------
 # prompt 'with the texture of' - modifies the surface of the subject.  Things like: chrome, wood, stone work well, but things like rain, clouds, stars don't have great effect
-promptWithTextureOf = 'with texture of {0}'
+prompt_with_texture_of = 'with texture of {0}'
 # prompt 'made of' - more radical than above, good with things like yarn, cotton, lace, or other effects where more than just surface modification is needed
-promptMadeOf = 'made of {0}'
-promptStyleOf = 'in the style of {0}'
+prompt_made_of = 'made of {0}'
+prompt_style_of = 'in the style of {0}'
 
 textures = 'argyle', 'pinstripe', 'cloth', 'fabric', 'hair', 'fur', 'lace', 'clouds', 'slime', 'yarn', 'wood', 'rainbows', 'jewelery',
 'blood', 'rain', 'leather', 'snow', 'elements', 'plastic', 'chrome', 'glass', 'cracked glass', 'powder', 'skin', 'billboards',
@@ -18,10 +18,10 @@ textures = 'argyle', 'pinstripe', 'cloth', 'fabric', 'hair', 'fur', 'lace', 'clo
 #--------------------------------------------------------------
 
 # Program is dumb, it just clicks taskbar discord icon, then clicks the text input bar at these locations and types, these values need setup per machine
-discordIconLocation = (1225,1408)
-discordMessageLocation = (507,1320)
+discord_icon_location = (1225,1408)
+discord_message_location = (507,1320)
 # Time between batches (9 prompts, midjourney's limit)
-batchSleepDelay = 150
+batch_sleep_delay = 150
 # Toggle debug statements
 DEBUG = True # perhaps change to python 'logging'
 
@@ -81,30 +81,30 @@ def setup_argument_parser():
     return args
     
 def generate_full_strings(args):
-    formattablePromptString = '{subject} --ar {aspectRatio} --chaos {chaos} --weird {weird} --stylize {stylize} {style}'
+    formattable_prompt_string = '{subject} --ar {aspectRatio} --chaos {chaos} --weird {weird} --stylize {stylize} {style}'
 
     # Convert subject array of strings into a single string separated by spaces
-    subjectAsString = ' '.join(map(str,args.subject))
+    subject_as_string = ' '.join(map(str,args.subject))
     # extract any embedded multiples in subject ie 'test {opt1, opt2}' -> ['test opt1' 'test opt2']
-    expandedSubjects = expand_strings(subjectAsString)
+    expanded_subjects = expand_strings(subject_as_string)
     #for each combination, insert into a string, then add that string to a list
-    allPromptStrings = []
+    all_prompt_strings = []
     for arg_ar in args.ar:
         for arg_weird in args.weird:
             for arg_chaos in args.chaos:
                 for arg_stylize in args.stylize:
                     for arg_style in args.style:
-                        for expandedSubject in expandedSubjects:
+                        for expanded_subject in expanded_subjects:
                             #add --style if style was set in options, doing this here to avoid having user input '--style' with the option
-                            styleString = f'--style {arg_style}' if (arg_style != '') else arg_style
-                            newString = formattablePromptString.format(
-                                subject=expandedSubject, aspectRatio = arg_ar, chaos = arg_chaos, weird = arg_weird, stylize = arg_stylize, style = styleString)
-                            allPromptStrings.append(newString)                        
+                            style_string = f'--style {arg_style}' if (arg_style != '') else arg_style
+                            formatted_string = formattable_prompt_string.format(
+                                subject=expanded_subject, aspectRatio = arg_ar, chaos = arg_chaos, weird = arg_weird, stylize = arg_stylize, style = style_string)
+                            all_prompt_strings.append(formatted_string)                        
         
-    return allPromptStrings                          
+    return all_prompt_strings                          
 
-def print_full_strings(fullStrings):
-    for index, string in enumerate(fullStrings):
+def print_full_strings(full_strings):
+    for index, string in enumerate(full_strings):
         if index % 9 == 0:
             print() #empty line
         print(string, end='\n')
@@ -121,39 +121,39 @@ def expand_strings(template):
     suffix = template[end+1:]
     return [f'{prefix}{word}{suffix}' for word in words]
     
-def inject_discord_prompts(fullStrings):
-    imagineString = '/imagine'
-    timerFragments = 20
-    totalPrompts = remainingPrompts = fullStrings.__len__()
+def inject_discord_prompts(full_strings):
+    imagine_string = '/imagine'
+    timer_fragments = 20
+    total_prompts = remaining_prompts = full_strings.__len__()
     
     
     # Discord Icon Location
-    pyautogui.click(discordIconLocation, clicks=1, interval=1, button='left')
+    pyautogui.click(discord_icon_location, clicks=1, interval=1, button='left')
     time.sleep(.2)
     
     # Discord Message Location
-    pyautogui.click(discordMessageLocation, clicks=1, interval=1, button='left')
+    pyautogui.click(discord_message_location, clicks=1, interval=1, button='left')
     time.sleep(.2)
     
-    while (remainingPrompts > 0):
+    while (remaining_prompts > 0):
         # Keyboard type the 9 strings and remove strings from list that we are processing
         for j in range(9):
-            if (remainingPrompts > 0 ):
-                pyautogui.typewrite( f'{imagineString} {fullStrings.pop()}')
-                remainingPrompts -= 1
+            if (remaining_prompts > 0 ):
+                pyautogui.typewrite( f'{imagine_string} {full_strings.pop()}')
+                remaining_prompts -= 1
                 time.sleep(.33)
                 pyautogui.press('enter')
                 time.sleep(1)
         
         # 2 decimal precision
-        remainingPercentage = '{:.2f}'.format((1-(remainingPrompts/totalPrompts)) * 100)
-        print(f'{remainingPrompts}/{totalPrompts} prompts remain. ({remainingPercentage}% complete.)')
+        remaining_percentage = '{:.2f}'.format((1-(remaining_prompts/total_prompts)) * 100)
+        print(f'{remaining_prompts}/{total_prompts} prompts remain. ({remaining_percentage}% complete.)')
         #don't sleep if list is empty
-        if (fullStrings.__len__() > 0 ):
-            for k in range(timerFragments):                
+        if (full_strings.__len__() > 0 ):
+            for k in range(timer_fragments):                
                 # Sleep progress percentage
-                print(f'{((k * 100/timerFragments))}% through current sleep.')
-                time.sleep(batchSleepDelay/timerFragments)
+                print(f'{((k * 100/timer_fragments))}% through current sleep.')
+                time.sleep(batch_sleep_delay/timer_fragments)
 
 def main():
     args = setup_argument_parser()
@@ -161,22 +161,22 @@ def main():
         print(args, end='\n\n')
     
     # Don't generate strings if we are using an input file
-    fullStrings = [''] if args.subject is None else generate_full_strings(args)
+    full_strings = [''] if args.subject is None else generate_full_strings(args)
         
     # text
     if (args.text is True):
-        print_full_strings(fullStrings)
+        print_full_strings(full_strings)
         sys.exit()
     # infile
     elif (args.infile.name != '<stdin>'):
         print('Using file ' + args.infile.name + ' for Discord injection, ignoring prompt args\n')
-        fullStrings = args.infile.readlines()
+        full_strings = args.infile.readlines()
 
     # Remove blank lines and remove trailing/leading white space (that were added for human readability)
-    nonBlankStrings = [s.strip() for s in fullStrings if s.strip() != '']
+    non_empty_strings = [s.strip() for s in full_strings if s.strip() != '']
 
     # infile/--subject
-    inject_discord_prompts(nonBlankStrings)
+    inject_discord_prompts(non_empty_strings)
 
 def test_expand_strings():
     print(expand_strings('static text {ab,yz}'))

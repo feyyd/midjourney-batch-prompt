@@ -9,11 +9,11 @@ my primary language.
 
 Script clicks Discord icon in Taskbar to bring to foreground, then it clicks the current Discord text input field.  Yes, this is very prone to error.
 
-    "discordIconLocation", "discordMessageLocation" - Tuple of x,y coordinates where the program clicks (Taskbar,Input field respectively)
+    "discord_icon_location", "discord_message_location" - Tuple of x,y coordinates where the program clicks (Taskbar,Input field respectively)
         These will almost certainly need to be changed or modified in some way
-    "batchSleepDelay" default 150 - is the number of seconds between batches of 9 that can be adjusted depending on the workload.
+    "batch_sleep_delay" default 150 - is the number of seconds between batches of 9 that can be adjusted depending on the workload.
     "DEBUG" default False - enable/disable debug statements
-    "timerFragments" default 20 - subdivisions of progress output (print statement every 5%, 100 would print every 1%)
+    "timer_fragments" default 20 - subdivisions of progress output (print statement every 5%, 100 would print every 1%)
 
 # usage
     usage: aiprompt.py [-h] [--subject SUBJECT [SUBJECT ...]] [--ar [AR ...]] [--weird [WEIRD ...]] [--chaos [CHAOS ...]]
@@ -60,6 +60,15 @@ Script clicks Discord icon in Taskbar to bring to foreground, then it clicks the
     Brown bananas in sunlight --ar 2:1 --chaos 5 --weird 20 --stylize 400
     Brown bananas in sunlight --ar 2:1 --chaos 10 --weird 20 --stylize 400
 
+  _Text output with expansion:_
+  
+    python .\aiprompt.py --subject "{Brown, Green, Yellow} bananas in sunlight" --ar 2:1 --stylize 400 --text
+
+    output:
+    Brown bananas in sunlight --ar 2:1 --chaos 0 --weird 0 --stylize 400
+    Green bananas in sunlight --ar 2:1 --chaos 0 --weird 0 --stylize 400
+    Yellow bananas in sunlight --ar 2:1 --chaos 0 --weird 0 --stylize 400
+
   _Read from file (blank lines and leading/trailing whitespace will be removed):_
 
     python .\aiprompt.py test.txt
@@ -67,20 +76,15 @@ Script clicks Discord icon in Taskbar to bring to foreground, then it clicks the
   One can run multiple prompts with --text option and redirect output to file (make sure DEBUG is false to avoid errors) and then run
   said file, ie (powershell):
 
-    #create
-    python .\aiprompt.py --subject Brown bananas in sunlight --ar 2:1 --weird 0 10 20 --chaos 5 10 --stylize 400 --text > myprompts.txt
+    #create with expansion of terms within {}
+    python .\aiprompt.py --subject "{Brown, Green, Yellow} Bananas" --ar 2:1 --weird 0 10 20 --chaos 5 10 --stylize 400 --text > myprompts.txt
     #append
-    python .\aiprompt.py --subject Giant mech canaries --ar 2:1 --weird 0 7 20 --chaos 5 10 --stylize 400 --text >> myprompts.txt
-    python .\aiprompt.py --subject Tiny red octopi --ar 2:1 --weird 2 10 20 --chaos 5 10 --stylize 400 --text >> myprompts.txt
+    python .\aiprompt.py --subject Giant mech canaries --ar 1:1 --weird 0 7 20 --chaos 5 10 --stylize 400 --text >> myprompts.txt
     #execute all generated prompts
     python .\aiprompt.py myprompts.txt
 
   Future:
 
-  Expansion of terms, the following _WOULD_ net the same result:
-
-    python .\aiprompt.py --subject {Brown bananas in sunlight, Giant mech canaries, Tiny red octopi} --ar 2:1 --weird 0 7 20 --chaos 5 10 --stylize 400
-
-  Custom list injection for different tags, "with texture of X", "made of X", "in the style of X" where X is a list of terms.
+    Custom list injection for different tags, "with texture of X", "made of X", "in the style of X" where X is a list of terms.
   
   
