@@ -49,7 +49,7 @@ def apply_custom_modes(args):
     return args
 
 def setup_argument_parser():
-    #setup console argument parsing
+    # setup console argument parsing
     parser = argparse.ArgumentParser(description='Midjourney AI Prompt Assist Tool')
     
     group = parser.add_mutually_exclusive_group(required=True)
@@ -87,7 +87,7 @@ def generate_full_strings(args):
     subject_as_string = ' '.join(map(str,args.subject))
     # extract any embedded multiples in subject ie 'test {opt1, opt2}' -> ['test opt1' 'test opt2']
     expanded_subjects = expand_strings(subject_as_string)
-    #for each combination, insert into a string, then add that string to a list
+    # for each combination, insert into a string, then add that string to a list
     all_prompt_strings = []
     for arg_ar in args.ar:
         for arg_weird in args.weird:
@@ -156,7 +156,7 @@ def inject_discord_prompts(full_strings):
         # 2 decimal precision
         remaining_percentage = '{:.2f}'.format((1-(remaining_prompts/total_prompts)) * 100)
         print(f'{remaining_prompts}/{total_prompts} prompts remain. ({remaining_percentage}% complete.)')
-        #don't sleep if list is empty
+        # don't sleep if list is empty
         if (full_strings.__len__() > 0 ):
             for k in range(timer_fragments):                
                 # Sleep progress percentage
