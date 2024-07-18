@@ -37,11 +37,14 @@ and "discordMessageLocation".  Yes, this is very prone to error.
     --mode3                           Custom Mode3 Settings. (Slots)
 
   **examples (powershell):**
+  
   _Inject into Discord via pyautogui:_
-  python .\aiprompt.py --subject Brown bananas in sunlight --ar 2:1 --weird 0 10 20 --chaos 5 10 --stylize 400
+  
+    python .\aiprompt.py --subject Brown bananas in sunlight --ar 2:1 --weird 0 10 20 --chaos 5 10 --stylize 400
   
   _Text output only:_
-  python .\aiprompt.py --subject Brown bananas in sunlight --ar 2:1 --weird 0 10 20 --chaos 5 10 --stylize 400 --text
+  
+    python .\aiprompt.py --subject Brown bananas in sunlight --ar 2:1 --weird 0 10 20 --chaos 5 10 --stylize 400 --text
 
     output:
     Brown bananas in sunlight --ar 2:1 --chaos 5 --weird 0 --stylize 400
