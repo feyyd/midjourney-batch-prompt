@@ -19,12 +19,12 @@ prompt_made_of = ', made of '
 prompt_style_of = ', in the style of '
 
 in_the_styles_of = ['picasso', 'van gough'] 
-#textures = ['argyle', 'pinstripe']
-textures = ['argyle', 'pinstripe', 'cloth', 'fabric', 'hair', 'fur', 'lace', 'clouds', 'slime', 'yarn', 'wood', 'rainbows', 'jewelery',
-'blood', 'rain', 'leather', 'snow', 'elements', 'plastic', 'chrome', 'glass', 'cracked glass', 'powder', 'skin', 'billboards',
-'crystals', 'gemstones', 'muscle tissue', 'dirt', 'mud', 'brick', 'letters', 'numbers', 'holidays (christmas, easter)', 'candy cane',
-'candysports jersey', 'uniform', 'foiliage', 'flowers', 'plants', 'moss', 'rust', 'cement', 'water', 'liquid', 'galaxies', 'stars',
-'lego', 'hearts']
+textures = ['argyle', 'pinstripe']
+# textures = ['argyle', 'pinstripe', 'cloth', 'fabric', 'hair', 'fur', 'lace', 'clouds', 'slime', 'yarn', 'wood', 'rainbows', 'jewelery',
+# 'blood', 'rain', 'leather', 'snow', 'elements', 'plastic', 'chrome', 'glass', 'cracked glass', 'powder', 'skin', 'billboards',
+# 'crystals', 'gemstones', 'muscle tissue', 'dirt', 'mud', 'brick', 'letters', 'numbers', 'holidays (christmas, easter)', 'candy cane',
+# 'candysports jersey', 'uniform', 'foiliage', 'flowers', 'plants', 'moss', 'rust', 'cement', 'water', 'liquid', 'galaxies', 'stars',
+# 'lego', 'hearts']
 
 
 
@@ -71,15 +71,16 @@ def setup_argument_parser():
     # these options will toggle the use of the topmost arrays of textures or style_ofs and will add to the end of the subject
     # WARNING:  Can cause enormous amounts of permutations so set the arrays and values in them accordingly
     group2 = parser.add_mutually_exclusive_group(required=False)
-    group2.add_argument('--textureof', action='store_true', help='Use texture_of with texture array in script')
-    group2.add_argument('--madeof', action='store_true', help='Use made_of with texture array in script')
+    group2.add_argument('--textureof', action='store_true', help='Adds "with the texture of" to end of subject prompt and uses internal texture array')
+    group2.add_argument('--madeof', action='store_true', help='Adds "made of" to end of subject prompt and uses internal texture array')
     
-    parser.add_argument('--styleof', action='store_true', help='Use style_of with texture array in script')
+    parser.add_argument('--styleof', action='store_true', help='Adds "in the style of" to end of subject prompt and uses internal styleof array')
     
-    parser.add_argument('--mode1', action='store_true', help='Custom Mode1 Settings. (Nice after subject setup)')
-    parser.add_argument('--mode2', action='store_true', help='Custom Mode2 Settings. (Test small amt permutations)')
-    parser.add_argument('--mode3', action='store_true', help='Custom Mode3 Settings. (Slots)')
+    parser.add_argument('--mode1', action='store_true', help='Custom Mode1 Settings. (Decent settings for good variety)')
+    parser.add_argument('--mode2', action='store_true', help='Custom Mode2 Settings. (Small amount permutations)')
+    parser.add_argument('--mode3', action='store_true', help='Custom Mode3 Settings. (Personal Project settings)')
     
+    # future
     # the idea is that a single percentage value can be passed and we will give a deviation off the other values
     # ie: 10 is passed for weird value, and 100 is passed as randomize value.  this would yield a 0-20 weird value
     # ie: 50 is passed for chaos value, and 10 is passed as randomize value.  this would yield 45-55 chaos value
@@ -120,7 +121,6 @@ def inject_string_with_values(expanded_subject, arg_style, arg_stylize, arg_chao
         'style':style_string
     }
     formatted_string = safe_format(formattable_prompt_string, **replace_values)
-    print(formatted_string)
     return formatted_string
     
 def generate_full_strings(args):
