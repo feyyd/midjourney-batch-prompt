@@ -23,7 +23,7 @@ discord_message_location = (507,1320)
 # Time between batches (9 prompts, midjourney's limit)
 batch_sleep_delay = 150
 # Toggle debug statements
-DEBUG = True # perhaps change to python 'logging'
+DEBUG = False # perhaps change to python 'logging'
 
 def apply_custom_modes(args):
     # When a custom mode is selected, replace command line arguments
@@ -109,17 +109,25 @@ def print_full_strings(full_strings):
             print() #empty line
         print(string, end='\n')
         
-# String Methods Word Extraction Approach (faster than regex, more readable)
+# string methods word extraction approach (faster than regex, more readable)
 def expand_strings(template):
     start = template.find('{')
     end = template.find('}', start)
     if start == -1 or end == -1:
         return [template]
+
     words_section = template[start+1:end]
     words = [word.strip() for word in words_section.split(',')]
     prefix = template[:start]
     suffix = template[end+1:]
-    return [f'{prefix}{word}{suffix}' for word in words]
+
+    expanded_strings = []
+    for word in words:
+        # recursive call to handle any nested braces in the suffix
+        for expanded_suffix in expand_strings(suffix):
+            expanded_strings.append(f'{prefix}{word}{expanded_suffix}')
+
+    return expanded_strings
     
 def inject_discord_prompts(full_strings):
     imagine_string = '/imagine'
