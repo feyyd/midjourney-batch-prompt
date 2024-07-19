@@ -3,6 +3,7 @@ import argparse
 import pyautogui
 import sys
 import re
+import random
 
 # Toggle debug statements
 DEBUG = False # perhaps change to python 'logging'
@@ -84,7 +85,7 @@ def setup_argument_parser():
     # the idea is that a single percentage value can be passed and we will give a deviation off the other values
     # ie: 10 is passed for weird value, and 100 is passed as randomize value.  this would yield a 0-20 weird value
     # ie: 50 is passed for chaos value, and 10 is passed as randomize value.  this would yield 45-55 chaos value
-    #parser.add_argument('--randomize', nargs='?', help='Randomize with percentage deviation from given value.')
+    parser.add_argument('--randomize', nargs='?', help='Randomize numerical inputs with percentage deviation from given value.')
 
     # Parse the arguments
     args = parser.parse_args()   
@@ -107,21 +108,34 @@ def safe_format(template, **kwargs):
     # Use the replacer function to format the string
     return pattern.sub(replacer, template)
 
-def inject_string_with_values(expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar):
-    formattable_prompt_string = '{subject}{texture_of}{made_of}{style_of} --ar {aspectRatio} --chaos {chaos} --weird {weird} --stylize {stylize} {style}'
+def inject_string_with_values(formattable_prompt_string, randomize_value, expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar):
+    # print(formattable_prompt_string)
     #add --style if style was set in options, doing this here to avoid having user input '--style' with the option
     style_string = f'--style {arg_style}' if (arg_style != '') else arg_style
     
     replace_values = {
         'subject':expanded_subject, 
         'aspectRatio':arg_ar, 
-        'chaos':arg_chaos, 
-        'weird':arg_weird, 
-        'stylize':arg_stylize, 
+        'chaos':get_random_input_scalar(randomize_value, arg_chaos), 
+        'weird':get_random_input_scalar(randomize_value, arg_weird), 
+        'stylize':get_random_input_scalar(randomize_value, arg_stylize),
         'style':style_string
     }
     formatted_string = safe_format(formattable_prompt_string, **replace_values)
     return formatted_string
+    
+def get_random_input_scalar(randomize_input, arg_value):
+    is_random = randomize_input is not None
+    
+    # randomize values if --randomize is set
+    if (is_random):
+        # 0-1 scaled by input then reduced to get percentage
+        random_scalar = random.random() * float(randomize_input) * random.choice([-.01,.01])
+        arg_value_randomized = random_scalar * float(arg_value)
+        return_value = int(float(arg_value) + arg_value_randomized)
+        return return_value
+    else:
+        return arg_value
     
 def generate_full_strings(args):
     # Convert subject array of strings into a single string separated by spaces
@@ -130,15 +144,13 @@ def generate_full_strings(args):
     expanded_subjects = expand_strings(subject_as_string)
     # for each combination, insert into a string, then add that string to a list
     all_prompt_strings = []
+    formattable_prompt_string = '{subject}{texture_of}{made_of}{style_of} --ar {aspectRatio} --chaos {chaos} --weird {weird} --stylize {stylize} {style}'
     for arg_ar in args.ar:
         for arg_weird in args.weird:
             for arg_chaos in args.chaos:
                 for arg_stylize in args.stylize:
                     for arg_style in args.style:
                         for expanded_subject in expanded_subjects:
-                            # inject all guaranteed to be used
-                            formatted_string = inject_string_with_values(expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar)
-                            
                             #-------------don't like this structure------------
                             # If either of these are true, need to iterate through texture array, also check 
                             # if style_of is set when going through textures and add it to final list at deepest level
@@ -146,31 +158,35 @@ def generate_full_strings(args):
                                 for texture in textures:
                                     # can only have texture_of or made_of not both so resolving that here by blanking the one not passed
                                     if (args.textureof):
-                                        formatted_string_l1 = safe_format(formatted_string, **{'texture_of':f'{prompt_with_texture_of}{texture}','made_of':''})    
+                                        formatted_string_l1 = safe_format(formattable_prompt_string, **{'texture_of':f'{prompt_with_texture_of}{texture}','made_of':''})    
                                     elif (args.madeof):
-                                        formatted_string_l1 = safe_format(formatted_string, **{'texture_of':'','made_of':f'{prompt_made_of}{texture}'})
+                                        formatted_string_l1 = safe_format(formattable_prompt_string, **{'texture_of':'','made_of':f'{prompt_made_of}{texture}'})
                                     
                                     # deepest level, so appending to all_prompt_strings
                                     if (args.styleof):
                                         for style_of_value in in_the_styles_of:
                                             formatted_string_l2 = safe_format(formatted_string_l1, **{'style_of':f'{prompt_style_of}{style_of_value}'})
-                                            all_prompt_strings.append(formatted_string_l2)
+                                            formatted_string_l3 = inject_string_with_values(formatted_string_l2, args.randomize, expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar)
+                                            all_prompt_strings.append(formatted_string_l3)
                                     # still deepest level, but style_of wasn't selected, so we blank that value in the formatted string
                                     else:
                                         formatted_string_l2 = safe_format(formatted_string_l1, **{'style_of':''})
-                                        all_prompt_strings.append(formatted_string_l2)
+                                        formatted_string_l3 = inject_string_with_values(formatted_string_l2, args.randomize, expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar)
+                                        all_prompt_strings.append(formatted_string_l3)
                             # this is the same code as the deepest level, but we still need to run it, because we never go through styles if
                             # texture_of or #made_of are both false.
                             else:
                                 # blank the unused values
-                                formatted_string_l1 = safe_format(formatted_string, **{'texture_of':'', 'made_of':''})
+                                formatted_string_l1 = safe_format(formattable_prompt_string, **{'texture_of':'', 'made_of':''})
                                 if (args.styleof):
                                         for style_of_value in in_the_styles_of:                                            
                                             formatted_string_l2 = safe_format(formatted_string_l1, **{'style_of':f'{prompt_style_of}{style_of_value}'})
-                                            all_prompt_strings.append(formatted_string_l2)
+                                            formatted_string_l3 = inject_string_with_values(formatted_string_l2, args.randomize, expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar)
+                                            all_prompt_strings.append(formatted_string_l3)
                                 else:
                                     formatted_string_l2 = safe_format(formatted_string_l1, **{'style_of':''})
-                                    all_prompt_strings.append(formatted_string_l2)
+                                    formatted_string_l3 = inject_string_with_values(formatted_string_l2, args.randomize, expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar)
+                                    all_prompt_strings.append(formatted_string_l3)
                             #--------------------------------------------------
     return all_prompt_strings                          
 
