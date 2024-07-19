@@ -4,14 +4,18 @@ import pyautogui
 import sys
 import re
 import random
+import pygetwindow as gw
 
 # Toggle debug statements
 DEBUG = False # perhaps change to python 'logging'
-# Program is dumb, it just clicks taskbar discord icon, then clicks the text input bar at these locations and types, these values need setup per machine
-discord_icon_location = (1225,1408)
-discord_message_location = (507,1320)
+
 # Time between batches (9 prompts, midjourney's limit)
 batch_sleep_delay = 150
+
+# dm section (top left of discord window)
+discord_click_one = (-3158, 53)
+# find convo, auto selects search textbox (just to the right of dm section button)
+discord_click_two = (-2987, 55)
 
 # prompt 'with the texture of' - modifies the surface of the subject.  Things like: chrome, wood, stone work well, but things like rain, clouds, stars don't have great effect
 prompt_with_texture_of = ', with texture of '
@@ -116,7 +120,6 @@ def safe_format(template, **kwargs):
     return pattern.sub(replacer, template)
 
 def inject_string_with_values(formattable_prompt_string, expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar):
-    # print(formattable_prompt_string)
     #add --style if style was set in options, doing this here to avoid having user input '--style' with the option
     style_string = f'--style {arg_style}' if (arg_style != '') else arg_style
     
@@ -232,14 +235,24 @@ def inject_discord_prompts(full_strings):
     timer_fragments = 20
     total_prompts = remaining_prompts = full_strings.__len__()
     
+    windows = gw.getWindowsWithTitle("Discord")
+    if (windows):
+        discord_window = windows[0]
+        discord_window.maximize()
+        discord_window.activate()
+    else:
+        print("No Discord window found.")
+        sys.exit()    
     
-    # Discord Icon Location
-    pyautogui.click(discord_icon_location, clicks=1, interval=1, button='left')
+    pyautogui.click(discord_click_one, clicks=1, interval=1, button='left')
     time.sleep(.2)
     
-    # Discord Message Location
-    pyautogui.click(discord_message_location, clicks=1, interval=1, button='left')
+    pyautogui.click(discord_click_two, clicks=1, interval=1, button='left')
     time.sleep(.2)
+    
+    pyautogui.typewrite('Midjourney Bot')
+    time.sleep(.2)
+    pyautogui.press('enter')
     
     while (remaining_prompts > 0):
         # Keyboard type the 9 strings and remove strings from list that we are processing
@@ -264,7 +277,10 @@ def inject_discord_prompts(full_strings):
 def main():
     args = setup_argument_parser()
     if (DEBUG):
+        # print argparse arguments
         print(args, end='\n\n')
+        # print window location if one needs to change the discord click locations
+        print(pyautogui.position())
     
     # Don't generate strings if we are using an input file
     full_strings = [''] if args.subject is None else generate_full_strings(args)
