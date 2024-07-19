@@ -19,16 +19,15 @@ my primary language.
 
 # Setup
 
-Script uses pygetwindow to select and maximize the Discord window, then it clicks the "Direct Messages" button followed by "Find or start conversation" and types Midjourney bot.  This occurs after every batch to insure the correct user is selected.
+Script uses pygetwindow to select and maximize the Discord window, then it clicks the "Direct Messages" button followed by "Find or start conversation" and types Midjourney bot.  This occurs after every batch to insure the correct user is selected.  By default Discord should be on the primary monitor, otherwise discord_click_one will need modification in order to click the "Direct Messages" button.
 
-    "discord_click_one", "discord_click_two" - Tuple of x,y coordinates where the program clicks,
-        ('Direct Messages','Find or start conversation' respectively) These will almost certainly
-        need to be changed or modified in some way as I am on 3 monitors.  I'm using windows so 
-        windowing system might be different on other OS
+    'discord_click_one' - Tuple of x,y coordinates where the program clicks 'Direct Messages'. 
+        'discord_click_one' may need to be changed or modified in some way if you are using multiple monitors.  
+        I'm using windows and this is not tested in Linux.
         
-    "batch_sleep_delay" default 150 - the number of seconds between batches of 9, adjuste based on workload.
-    "DEBUG" default False - enable/disable debug statements
-    "timer_fragments" default 20 - subdivisions of progress output (print statement every 5%, 100 would print every 1%)
+    'batch_sleep_delay' default 150 - the number of seconds between batches of 9, adjuste based on workload.
+    'DEBUG' default False - enable/disable debug statements
+    'timer_fragments' default 20 - subdivisions of progress output (print statement every 5%, 100 would print every 1%)
 
 # usage
     usage: aiprompt.py [-h] [--subject SUBJECT [SUBJECT ...]] [--ar [AR ...]] [--weird [WEIRD ...]] [--chaos [CHAOS ...]] [--stylize [STYLIZE ...]] 
