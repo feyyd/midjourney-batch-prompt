@@ -198,7 +198,7 @@ def print_full_strings(full_strings):
     for index, string in enumerate(full_strings):
         if index % 9 == 0:
             print() #empty line
-        print(string, end='\n')
+        print(string)
         
 # string methods word extraction approach (faster than regex, more readable)
 def expand_strings(template):
