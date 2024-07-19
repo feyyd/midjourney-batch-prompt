@@ -81,12 +81,12 @@ def setup_argument_parser():
     parser.add_argument('--mode2', action='store_true', help='Custom Mode2 Settings. (Small amount permutations)')
     parser.add_argument('--mode3', action='store_true', help='Custom Mode3 Settings. (Personal Project settings)')
     
-    # future
-    # the idea is that a single percentage value can be passed and we will give a deviation off the other values
-    # ie: 10 is passed for weird value, and 100 is passed as randomize value.  this would yield a 0-20 weird value
-    # ie: 50 is passed for chaos value, and 10 is passed as randomize value.  this would yield 45-55 chaos value
-    parser.add_argument('--randomize_percent', nargs='?', help='Randomize numerical inputs with percentage deviation from given value.')
-    parser.add_argument('--randomize_number', nargs='?', help='Randomize numerical inputs with 0-value added or subtracted.')
+    
+    group3 = parser.add_mutually_exclusive_group(required=False)
+    # ie: 50 is passed for weird value, and 10 is passed as randomize value.  this would yield a 45-55 weird value
+    group3.add_argument('--randomize_percent', nargs='?', help='Randomize numerical inputs with percentage deviation from given value.')
+    # ie: 50 is passed for chaos value, and 10 is passed as randomize value.  this would yield 40-60 chaos value
+    group3.add_argument('--randomize_number', nargs='?', help='Randomize numerical inputs with 0-value added or subtracted.')
 
     # Parse the arguments
     args = parser.parse_args()
