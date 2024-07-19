@@ -244,17 +244,19 @@ def inject_discord_prompts(full_strings):
         print("No Discord window found.")
         sys.exit()    
     
-    pyautogui.click(discord_click_one, clicks=1, interval=1, button='left')
-    time.sleep(.2)
     
-    pyautogui.click(discord_click_two, clicks=1, interval=1, button='left')
-    time.sleep(.2)
-    
-    pyautogui.typewrite('Midjourney Bot')
-    time.sleep(.2)
-    pyautogui.press('enter')
     
     while (remaining_prompts > 0):
+        # select Midjourney Bot in case someone messages us between batches
+        pyautogui.click(discord_click_one, clicks=1, interval=1, button='left')
+        time.sleep(.2)
+        pyautogui.click(discord_click_two, clicks=1, interval=1, button='left')
+        time.sleep(.2)
+        
+        pyautogui.typewrite('Midjourney Bot')
+        time.sleep(.33)
+        pyautogui.press('enter')
+    
         # Keyboard type the 9 strings and remove strings from list that we are processing
         for j in range(9):
             if (remaining_prompts > 0 ):
@@ -262,17 +264,18 @@ def inject_discord_prompts(full_strings):
                 remaining_prompts -= 1
                 time.sleep(.33)
                 pyautogui.press('enter')
-                time.sleep(1)
+                time.sleep(1.25)
         
-        # 2 decimal precision
-        remaining_percentage = '{:.2f}'.format((1-(remaining_prompts/total_prompts)) * 100)
-        print(f'{remaining_prompts}/{total_prompts} prompts remain. ({remaining_percentage}% complete.)')
+        # percentatge complete, 2 decimal precision
+        percent_complete = '{:.2f}'.format((1-(remaining_prompts/total_prompts)) * 100)
+        print(f'{remaining_prompts}/{total_prompts} prompts remain. ({percent_complete}% complete.)', end='\n\n')
+        
         # don't sleep if list is empty
         if (full_strings.__len__() > 0 ):
-            for k in range(timer_fragments):                
+            for k in range(timer_fragments+1):
                 # Sleep progress percentage
-                print(f'{((k * 100/timer_fragments))}% through current sleep.')
                 time.sleep(batch_sleep_delay/timer_fragments)
+                print(f'{((k * 100/timer_fragments))}% through current sleep.')
 
 def main():
     args = setup_argument_parser()
