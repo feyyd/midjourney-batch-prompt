@@ -258,7 +258,7 @@ def inject_discord_prompts(full_strings):
         
         # percentatge complete, 2 decimal precision
         percent_complete = '{:.2f}'.format((1-(remaining_prompts/total_prompts)) * 100)
-        print(f'{remaining_prompts}/{total_prompts} prompts remain. ({percent_complete}% complete.)', end='\n\n')
+        print(f'{remaining_prompts}/{total_prompts} prompts remain. ({percent_complete}% complete.)\n')
         
         # don't sleep if list is empty
         if ( len(full_strings) > 0 ):
