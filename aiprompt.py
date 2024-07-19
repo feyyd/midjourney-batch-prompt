@@ -6,16 +6,17 @@ import re
 import random
 import pygetwindow as gw
 
+# This is the value you might need to modify if program is not clicking in the right place
+discord_click_one = (50, 60) # dm section (top left of discord window)
+
+# find convo, auto selects search textbox, dynamic now, so no modification should be needed to this value, the first one
+discord_click_two = (discord_click_one[0]+90, 60)
+
 # Toggle debug statements
 DEBUG = False # perhaps change to python 'logging'
 
 # Time between batches (9 prompts, midjourney's limit)
 batch_sleep_delay = 150
-
-# dm section (top left of discord window)
-discord_click_one = (-3158, 53)
-# find convo, auto selects search textbox (just to the right of dm section button)
-discord_click_two = (-2987, 55)
 
 # prompt 'with the texture of' - modifies the surface of the subject.  Things like: chrome, wood, stone work well, but things like rain, clouds, stars don't have great effect
 prompt_with_texture_of = ', with texture of '
