@@ -31,6 +31,11 @@ textures = ['argyle', 'pinstripe']
 # 'candysports jersey', 'uniform', 'foiliage', 'flowers', 'plants', 'moss', 'rust', 'cement', 'water', 'liquid', 'galaxies', 'stars',
 # 'lego', 'hearts']
 
+# caveat: using the large arrays of textures or styles like above can cause huge files, 
+# for example the following prompt generates 6.5 megabytes and 29,000 queries:
+# python .\aiprompt.py --subject "{Green, Red, Orange} Frog" --text --styleof --textureof --mode3
+
+# 3 subject * 2 style of * 49 textures * 4 chaos value * 4 weird value * 2 style value * 3 stylize value = 28,800 prompts
 
 
 def apply_custom_modes(args):
