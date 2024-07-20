@@ -136,14 +136,14 @@ def randomize_arg(arg_value):
     if (is_random_percent):
         # base value + positive or negative percentage of base value
         #          base val  + base val  *  sign and scale            * input percent
-        return int(arg_value + arg_value * (random.uniform(-.01, .01) * float(arg_randomize_percent)))
+        return max(0, int(arg_value + arg_value * (random.uniform(-.01, .01) * float(arg_randomize_percent))))
                 
                    
     elif(is_random_number):
         #         base value + sign and scale     * input number
-        return int(arg_value + random.uniform(-1,1) * float(arg_randomize_number))
+        return max(0,int(arg_value + random.uniform(-1,1) * float(arg_randomize_number)))
     else:
-        return arg_value
+        return max(0,arg_value)
     
 def generate_full_strings(args):
     # Convert subject array of strings into a single string separated by spaces
