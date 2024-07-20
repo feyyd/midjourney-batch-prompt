@@ -32,6 +32,11 @@ textures = ['argyle', 'pinstripe']
 # 'candysports jersey', 'uniform', 'foiliage', 'flowers', 'plants', 'moss', 'rust', 'cement', 'water', 'liquid', 'galaxies', 'stars',
 # 'lego', 'hearts']
 
+# caveat: using the large arrays of textures or styles like above can cause huge files, 
+# for example the following prompt generates 6.5 megabytes and 29,000 queries:
+# python .\aiprompt.py --subject "{Green, Red, Orange} Frog" --text --styleof --textureof --mode3
+
+# 3 subject * 2 style of * 49 textures * 4 chaos value * 4 weird value * 2 style value * 3 stylize value = 28,800 prompts
 
 
 def apply_custom_modes(args):
@@ -120,96 +125,86 @@ def safe_format(template, **kwargs):
     # Use the replacer function to format the string
     return pattern.sub(replacer, template)
 
-def inject_string_with_values(formattable_prompt_string, expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar):
-    #add --style if style was set in options, doing this here to avoid having user input '--style' with the option
-    style_string = f'--style {arg_style}' if (arg_style != '') else arg_style
-    
-    replace_values = {
-        'subject':expanded_subject, 
-        'aspectRatio':arg_ar, 
-        'chaos':randomize_arg(arg_chaos), 
-        'weird':randomize_arg(arg_weird), 
-        'stylize':randomize_arg(arg_stylize),
-        'style':style_string
-    }
-    formatted_string = safe_format(formattable_prompt_string, **replace_values)
-    return formatted_string
+
     
 def randomize_arg(arg_value):
     is_random_percent = arg_randomize_percent is not None
     is_random_number = arg_randomize_number is not None
+    arg_value = float(arg_value)
     
     # randomize values if --randomize is set
     if (is_random_percent):
         # base value + positive or negative percentage of base value
-        return int(float(arg_value) + 
-                   float(arg_value) * (random.uniform(-.01, .01) * float(arg_randomize_percent)))
-                   #base value      * sign and scale               * input percent
+        #          base val  + base val  *  sign and scale            * input percent
+        return int(arg_value + arg_value * (random.uniform(-.01, .01) * float(arg_randomize_percent)))
+                
                    
     elif(is_random_number):
         #         base value + sign and scale     * input number
-        return int(float(arg_value) + random.uniform(-1,1) * float(arg_randomize_number))
+        return int(arg_value + random.uniform(-1,1) * float(arg_randomize_number))
     else:
         return arg_value
     
 def generate_full_strings(args):
     # Convert subject array of strings into a single string separated by spaces
-    subject_as_string = ' '.join(map(str,args.subject))
-    # extract any embedded multiples in subject ie 'test {opt1, opt2}' -> ['test opt1' 'test opt2']
-    expanded_subjects = expand_strings(subject_as_string)
-    # for each combination, insert into a string, then add that string to a list
+    subject_as_string = ' '.join(map(str, args.subject))
+    # Extract any embedded multiples in subject ie 'test {opt1, opt2}' -> ['test opt1', 'test opt2']
+    expanded_subjects = expand_strings(subject_as_string)    
     all_prompt_strings = []
-    formattable_prompt_string = '{subject}{texture_of}{made_of}{style_of} --ar {aspectRatio} --chaos {chaos} --weird {weird} --stylize {stylize} {style}'
+    
+    def process_styles(expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar, texture, made_of):
+        if args.styleof:
+            for style_of_value in in_the_styles_of:
+                all_prompt_strings.append(
+                    inject_string_with_values(expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar, texture, made_of, f'{prompt_style_of}{style_of_value}')
+                )
+        else:
+            all_prompt_strings.append(
+                inject_string_with_values(expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar, texture, made_of, '')
+            )
+    
+    def inject_string_with_values(expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar, texture, made_of, style_of_value):
+        # Define the formattable string template
+        formattable_prompt_string = '{subject}{texture_of}{made_of}{style_of} --ar {aspectRatio} --chaos {chaos} --weird {weird} --stylize {stylize} {style}'
+        #add --style if style was set in options, doing this here to avoid having user input '--style' with the option
+        style_string = f'--style {arg_style}' if (arg_style != '') else arg_style
+        
+        replace_values = {
+            'subject':expanded_subject, 
+            'aspectRatio':arg_ar, 
+            'chaos':randomize_arg(arg_chaos), 
+            'weird':randomize_arg(arg_weird), 
+            'stylize':randomize_arg(arg_stylize),
+            'style':style_string,
+            'texture_of': texture,
+            'made_of': made_of,
+            'style_of': style_of_value
+        }
+        formatted_string = safe_format(formattable_prompt_string, **replace_values)
+        return formatted_string
+
     for arg_ar in args.ar:
         for arg_weird in args.weird:
             for arg_chaos in args.chaos:
                 for arg_stylize in args.stylize:
                     for arg_style in args.style:
                         for expanded_subject in expanded_subjects:
-                            #-------------don't like this structure------------
-                            # If either of these are true, need to iterate through texture array, also check 
-                            # if style_of is set when going through textures and add it to final list at deepest level
-                            if ( args.textureof or args.madeof):
+                            if args.textureof or args.madeof:
                                 for texture in textures:
-                                    # can only have texture_of or made_of not both so resolving that here by blanking the one not passed
-                                    if (args.textureof):
-                                        formatted_string_l1 = safe_format(formattable_prompt_string, **{'texture_of':f'{prompt_with_texture_of}{texture}','made_of':''})    
-                                    elif (args.madeof):
-                                        formatted_string_l1 = safe_format(formattable_prompt_string, **{'texture_of':'','made_of':f'{prompt_made_of}{texture}'})
-                                    
-                                    # deepest level, so appending to all_prompt_strings
-                                    if (args.styleof):
-                                        for style_of_value in in_the_styles_of:
-                                            formatted_string_l2 = safe_format(formatted_string_l1, **{'style_of':f'{prompt_style_of}{style_of_value}'})
-                                            formatted_string_l3 = inject_string_with_values(formatted_string_l2, expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar)
-                                            all_prompt_strings.append(formatted_string_l3)
-                                    # still deepest level, but style_of wasn't selected, so we blank that value in the formatted string
-                                    else:
-                                        formatted_string_l2 = safe_format(formatted_string_l1, **{'style_of':''})
-                                        formatted_string_l3 = inject_string_with_values(formatted_string_l2, expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar)
-                                        all_prompt_strings.append(formatted_string_l3)
-                            # this is the same code as the deepest level, but we still need to run it, because we never go through styles if
-                            # texture_of or #made_of are both false.
+                                    if args.textureof:
+                                        process_styles(expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar, f'{prompt_with_texture_of}{texture}', '')
+                                    elif args.madeof:
+                                        process_styles(expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar, '', f'{prompt_made_of}{texture}')
                             else:
-                                # blank the unused values
-                                formatted_string_l1 = safe_format(formattable_prompt_string, **{'texture_of':'', 'made_of':''})
-                                if (args.styleof):
-                                        for style_of_value in in_the_styles_of:                                            
-                                            formatted_string_l2 = safe_format(formatted_string_l1, **{'style_of':f'{prompt_style_of}{style_of_value}'})
-                                            formatted_string_l3 = inject_string_with_values(formatted_string_l2, expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar)
-                                            all_prompt_strings.append(formatted_string_l3)
-                                else:
-                                    formatted_string_l2 = safe_format(formatted_string_l1, **{'style_of':''})
-                                    formatted_string_l3 = inject_string_with_values(formatted_string_l2, expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar)
-                                    all_prompt_strings.append(formatted_string_l3)
-                            #--------------------------------------------------
-    return all_prompt_strings                          
+                                process_styles(expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar, '', '')
+
+    return all_prompt_strings
 
 def print_full_strings(full_strings):
     for index, string in enumerate(full_strings):
         if index % 9 == 0:
             print() #empty line
-        print(string, end='\n')
+        print(string)
         
 # string methods word extraction approach (faster than regex, more readable)
 def expand_strings(template):
@@ -234,7 +229,7 @@ def expand_strings(template):
 def inject_discord_prompts(full_strings):
     imagine_string = '/imagine'
     timer_fragments = 20
-    total_prompts = remaining_prompts = full_strings.__len__()
+    total_prompts = remaining_prompts = len(full_strings)
     
     windows = gw.getWindowsWithTitle("Discord")
     if (windows):
@@ -269,10 +264,10 @@ def inject_discord_prompts(full_strings):
         
         # percentatge complete, 2 decimal precision
         percent_complete = '{:.2f}'.format((1-(remaining_prompts/total_prompts)) * 100)
-        print(f'{remaining_prompts}/{total_prompts} prompts remain. ({percent_complete}% complete.)', end='\n\n')
+        print(f'{remaining_prompts}/{total_prompts} prompts remain. ({percent_complete}% complete.)\n')
         
         # don't sleep if list is empty
-        if (full_strings.__len__() > 0 ):
+        if ( len(full_strings) > 0 ):
             for k in range(timer_fragments+1):
                 # Sleep progress percentage
                 time.sleep(batch_sleep_delay/timer_fragments)
@@ -287,7 +282,8 @@ def main():
         print(pyautogui.position())
     
     # Don't generate strings if we are using an input file
-    full_strings = [''] if args.subject is None else generate_full_strings(args)
+    # full_strings = [''] if args.subject is None else generate_full_strings(args)
+    full_strings = generate_full_strings(args) if args.subject else ['']
         
     # text
     if (args.text is True):
@@ -295,7 +291,7 @@ def main():
         sys.exit()
     # infile
     elif (args.infile.name != '<stdin>'):
-        print('Using file ' + args.infile.name + ' for Discord injection, ignoring prompt args\n')
+        print(f'Using file {args.infile.name} for Discord injection, ignoring prompt args\n')
         full_strings = args.infile.readlines()
 
     # Remove blank lines and remove trailing/leading white space (that were added for human readability)
