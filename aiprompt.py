@@ -112,7 +112,7 @@ def setup_argument_parser():
 
     
 def safe_format(template, **kwargs):
-    # format options weren't letting me replace subset of placeholders, re method allows it though, written by ChatGPT
+    # format options weren't letting me replace subset of placeholders, regex method allows it though, written by ChatGPT
 
     # Create a pattern to match named placeholders
     pattern = re.compile(r'\{(\w+)\}')
@@ -166,7 +166,7 @@ def generate_full_strings(args):
     def inject_string_with_values(expanded_subject, arg_style, arg_stylize, arg_chaos, arg_weird, arg_ar, texture, made_of, style_of_value):
         # Define the formattable string template
         formattable_prompt_string = '{subject}{texture_of}{made_of}{style_of} --ar {aspectRatio} --chaos {chaos} --weird {weird} --stylize {stylize} {style}'
-        #add --style if style was set in options, doing this here to avoid having user input '--style' with the option
+        # add --style if style was set in options, doing this here to avoid having user input '--style' with the option
         style_string = f'--style {arg_style}' if (arg_style != '') else arg_style
         
         replace_values = {
@@ -282,7 +282,6 @@ def main():
         print(pyautogui.position())
     
     # Don't generate strings if we are using an input file
-    # full_strings = [''] if args.subject is None else generate_full_strings(args)
     full_strings = generate_full_strings(args) if args.subject else ['']
         
     # text
