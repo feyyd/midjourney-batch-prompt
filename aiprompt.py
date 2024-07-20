@@ -11,7 +11,7 @@ discord_click_one = (50, 60) # dm section (top left of discord window)
 # Modification should not be needed as this is set based on above click location
 discord_click_two = (discord_click_one[0]+90, discord_click_one[1]) #find conversation location, clicking this area auto selects search textbox
 # Toggle debug statements
-DEBUG = False # perhaps change to python 'logging'
+DEBUG = True # perhaps change to python 'logging'
 # Time between batches (9 prompts, midjourney's limit)
 batch_sleep_delay = 150
 
@@ -289,6 +289,7 @@ def main():
     # text
     if (args.text is True):
         print_full_strings(full_strings)
+        if DEBUG: print(f'Line Count w/ Spaces:{len(full_strings)}')
         sys.exit()
     # infile
     elif (args.infile.name != '<stdin>'):
@@ -297,7 +298,7 @@ def main():
 
     # Remove blank lines and remove trailing/leading white space (that were added for human readability)
     non_empty_strings = [s.strip() for s in full_strings if s.strip() != '']
-
+    
     # infile/--subject
     inject_discord_prompts(non_empty_strings)
 
