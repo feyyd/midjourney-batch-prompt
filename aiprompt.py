@@ -8,35 +8,34 @@ import pygetwindow as gw
 
 # This is the value you might need to modify if program is not clicking in the right place
 discord_click_one = (50, 60) # dm section (top left of discord window)
-
-# find convo, auto selects search textbox, dynamic now, so no modification should be needed to this value, the first one
-discord_click_two = (discord_click_one[0]+90, 60)
-
+# Modification should not be needed as this is set based on above click location
+discord_click_two = (discord_click_one[0]+90, discord_click_one[1]) #find conversation location, clicking this area auto selects search textbox
 # Toggle debug statements
 DEBUG = False # perhaps change to python 'logging'
-
 # Time between batches (9 prompts, midjourney's limit)
 batch_sleep_delay = 150
 
-# prompt 'with the texture of' - modifies the surface of the subject.  Things like: chrome, wood, stone work well, but things like rain, clouds, stars don't have great effect
+# prompt modifiers
+# modifies the surface of the subject.  Things like: chrome, wood, stone work well, but things like rain, clouds, stars don't have great effect
 prompt_with_texture_of = ', with texture of '
-# prompt 'made of' - more radical than above, good with things like yarn, cotton, lace, or other effects where more than just surface modification is needed
+# more radical than above, good with things like yarn, cotton, lace, or other effects where more than just surface modification is needed
 prompt_made_of = ', made of '
+# good for using someone elses style like an artist or director, also good for time periods or genre
 prompt_style_of = ', in the style of '
 
-in_the_styles_of = ['picasso', 'van gough'] 
-textures = ['argyle', 'pinstripe']
-# textures = ['argyle', 'pinstripe', 'cloth', 'fabric', 'hair', 'fur', 'lace', 'clouds', 'slime', 'yarn', 'wood', 'rainbows', 'jewelery',
+# array values for prompt modifiers.  textures used for textureof and madeof, styleof has its own array, modify arrays or manually use {} in subject
+in_the_styles_of = ['picasso', 'comic book', 'edo period'] 
+textures = ['argyle', 'pinstripes']
+# textures = ['argyle', 'pinstripes', 'cloth', 'fabric', 'hair', 'fur', 'lace', 'clouds', 'slime', 'yarn', 'wood', 'rainbows', 'jewelery',
 # 'blood', 'rain', 'leather', 'snow', 'elements', 'plastic', 'chrome', 'glass', 'cracked glass', 'powder', 'skin', 'billboards',
 # 'crystals', 'gemstones', 'muscle tissue', 'dirt', 'mud', 'brick', 'letters', 'numbers', 'holidays (christmas, easter)', 'candy cane',
 # 'candysports jersey', 'uniform', 'foiliage', 'flowers', 'plants', 'moss', 'rust', 'cement', 'water', 'liquid', 'galaxies', 'stars',
 # 'lego', 'hearts']
 
-# caveat: using the large arrays of textures or styles like above can cause huge files, 
+# !!!CAVEAT!!!: using the large arrays of textures or styles like above can cause huge files and prompt spaces
 # for example the following prompt generates 6.5 megabytes and 29,000 queries:
 # python .\aiprompt.py --subject "{Green, Red, Orange} Frog" --text --styleof --textureof --mode3
-
-# 3 subject * 2 style of * 49 textures * 4 chaos value * 4 weird value * 2 style value * 3 stylize value = 28,800 prompts
+# 3 subject * 2 style of * 49 textures * 4 chaos value * 4 weird value * 2 style value * 3 stylize value = 28,800
 
 
 def apply_custom_modes(args):
@@ -124,26 +123,24 @@ def safe_format(template, **kwargs):
     
     # Use the replacer function to format the string
     return pattern.sub(replacer, template)
-
-
     
-def randomize_arg(arg_value):
+def randomize_arg_min0(arg_value):
     is_random_percent = arg_randomize_percent is not None
     is_random_number = arg_randomize_number is not None
-    arg_value = float(arg_value)
-    
+    return_value = arg_value = float(arg_value)
+        
     # randomize values if --randomize is set
     if (is_random_percent):
         # base value + positive or negative percentage of base value
         #          base val  + base val  *  sign and scale            * input percent
-        return max(0, int(arg_value + arg_value * (random.uniform(-.01, .01) * float(arg_randomize_percent))))
+        return_value = arg_value + arg_value * (random.uniform(-.01, .01) * float(arg_randomize_percent))
                 
                    
     elif(is_random_number):
         #         base value + sign and scale     * input number
-        return max(0,int(arg_value + random.uniform(-1,1) * float(arg_randomize_number)))
-    else:
-        return max(0,arg_value)
+        return_value = arg_value + random.uniform(-1,1) * float(arg_randomize_number)
+        
+    return int(max(0,return_value))
     
 def generate_full_strings(args):
     # Convert subject array of strings into a single string separated by spaces
@@ -172,9 +169,9 @@ def generate_full_strings(args):
         replace_values = {
             'subject':expanded_subject, 
             'aspectRatio':arg_ar, 
-            'chaos':randomize_arg(arg_chaos), 
-            'weird':randomize_arg(arg_weird), 
-            'stylize':randomize_arg(arg_stylize),
+            'chaos':randomize_arg_min0(arg_chaos), 
+            'weird':randomize_arg_min0(arg_weird), 
+            'stylize':randomize_arg_min0(arg_stylize),
             'style':style_string,
             'texture_of': texture,
             'made_of': made_of,
@@ -206,7 +203,7 @@ def print_full_strings(full_strings):
             print() #empty line
         print(string)
         
-# string methods word extraction approach (faster than regex, more readable)
+# string methods word extraction approach (faster than regex (tested non-recursively at least), more readable)
 def expand_strings(template):
     start = template.find('{')
     end = template.find('}', start)
@@ -222,7 +219,13 @@ def expand_strings(template):
     for word in words:
         # recursive call to handle any nested braces in the suffix
         for expanded_suffix in expand_strings(suffix):
-            expanded_strings.append(f'{prefix}{word}{expanded_suffix}')
+            # Nested { or } would cause prompts to do weird stuff when injecting into Discord, so I'm just disallowing it and halting program if this happens
+            append_string = f'{prefix}{word}{expanded_suffix}'
+            if ( '{' in append_string or '}' in append_string ):
+                print(f'Nested brackets {{ }} are not allowed. Offender: {append_string}\n')
+                sys.exit()
+            else:
+                expanded_strings.append(append_string)
 
     return expanded_strings
     
@@ -241,9 +244,8 @@ def inject_discord_prompts(full_strings):
         sys.exit()    
     
     
-    
     while (remaining_prompts > 0):
-        # select Midjourney Bot in case someone messages us between batches
+        # select Midjourney Bot, least error prone way I have found
         pyautogui.click(discord_click_one, clicks=1, interval=1, button='left')
         time.sleep(.2)
         pyautogui.click(discord_click_two, clicks=1, interval=1, button='left')
@@ -254,7 +256,7 @@ def inject_discord_prompts(full_strings):
         pyautogui.press('enter')
     
         # Keyboard type the 9 strings and remove strings from list that we are processing
-        for j in range(9):
+        for _ in range(9):
             if (remaining_prompts > 0 ):
                 pyautogui.typewrite( f'{imagine_string} {full_strings.pop()}')
                 remaining_prompts -= 1
@@ -267,7 +269,7 @@ def inject_discord_prompts(full_strings):
         print(f'{remaining_prompts}/{total_prompts} prompts remain. ({percent_complete}% complete.)\n')
         
         # don't sleep if list is empty
-        if ( len(full_strings) > 0 ):
+        if ( remaining_prompts > 0 ):
             for k in range(timer_fragments+1):
                 # Sleep progress percentage
                 time.sleep(batch_sleep_delay/timer_fragments)
@@ -299,9 +301,6 @@ def main():
     # infile/--subject
     inject_discord_prompts(non_empty_strings)
 
-def test_expand_strings():
-    print(expand_strings('static text {ab,yz}'))
-
 if __name__ == '__main__':
-    print() # Easier to read command line with separator
-    main() 
+    print() # Easier to read command line with separation
+    main()
