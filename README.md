@@ -8,7 +8,7 @@ my primary language.
 # Features
 
 * Discord injection
-* Read from file
+* Read input from file
 * Text output/write to file via piping
 * Bracket grouping
 * Random values by percent
@@ -137,11 +137,11 @@ Script uses pygetwindow to select and maximize the Discord window, then it click
     Dirty Bananas, with texture of pinstripe, in the style of van gough --ar 2:1 --chaos 24 --weird 45 --stylize 100
 
   One can run multiple prompts with --text option and redirect output to file (make sure DEBUG is false to avoid errors) and then run
-  said file, ie (powershell):
+  said file. Powershell example:
 
     #create with expansion of terms within {}
-    python .\aiprompt.py --subject "{Brown, Green, Yellow} Bananas" --ar 2:1 --weird 0 10 20 --chaos 5 10 --stylize 400 --text > myprompts.txt
+    python .\aiprompt.py --subject "{Brown, Green, Yellow} Bananas" --text > myprompts.txt
     #append
-    python .\aiprompt.py --subject Giant mech canaries --ar 1:1 --weird 0 7 20 --chaos 5 10 --stylize 400 --text >> myprompts.txt
-    #execute all generated prompts
+    python .\aiprompt.py --subject Giant mech canaries --text >> myprompts.txt
+    #execute all generated prompts, this mode ignores other command line arguments if passed with file
     python .\aiprompt.py myprompts.txt
